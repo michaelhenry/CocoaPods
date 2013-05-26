@@ -29,13 +29,21 @@ module Pod
       it "deletes a #{scope} configuration option from the config file" do
         not_current_scope = scopes.detect { |s| s != scope }
         
-        run_command('config', not_current_scope, project_name, project_path)
-        run_command('config', scope, project_name, project_path)
-        run_command('config', scope, "--delete", project_name, project_path)
+        run_command('config', "--#{not_current_scope}", project_name, project_path)
+        run_command('config', "--#{scope}", project_name, project_path)
+        run_command('config', "--#{scope}", "--delete", project_name)
         
         yaml = YAML.load(File.open(@file_path))
         yaml[project_name][scope].should.equal nil
         yaml[project_name][not_current_scope].should.equal project_path
+      end
+
+      it "deletes the config key if no scopes are set" do
+        run_command('config', "--#{scope}", project_name, project_path)
+        run_command('config', "--#{scope}", "--delete", project_name)
+
+        yaml = YAML.load(File.open(@file_path))
+        yaml[project_name].should.equal nil
       end
     end
 
