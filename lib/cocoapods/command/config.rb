@@ -5,18 +5,20 @@ module Pod
     class Config < Command
       CONFIG_FILE_PATH = File.expand_path('~/.config/cocoapods')
 
-      self.summary = ''
+      self.summary = 'Something like `bundle config` ... but better.'
       self.description = <<-DESC
+        Run `bundle help config`, but replace 'bundle' with 'pod'
       DESC
+      # TODO: write documentation
 
-      self.arguments = '[name] [path]'
+      self.arguments = '[name] (path) [--local, --global, --delete]'
 
       def initialize(argv)
         @local = argv.flag?('local')
         @global = argv.flag?('global')
         @should_delete = argv.flag?('delete')
         @name   = argv.shift_argument
-        @path   = argv.shift_argument unless @should_delete
+        @path   = argv.shift_argument
         super
       end
       def self.options
