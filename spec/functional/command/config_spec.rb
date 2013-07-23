@@ -7,7 +7,6 @@ module Pod
 
     project_name = 'example'
     project_path = '/path/to/example'
-    git_repo     = 'git://example.git'
     scopes       = ['global', 'local']
 
     before do
@@ -16,7 +15,6 @@ module Pod
       Command::Config.send(:remove_const, 'CONFIG_FILE_PATH')
       Command::Config.const_set("CONFIG_FILE_PATH", @file_path)
     end
-
 
     scopes.each do |scope|
       it "writes a #{scope} configuration option to the config file" do
@@ -52,6 +50,18 @@ module Pod
       yaml = YAML.load(File.open(@file_path))
       yaml[project_name]['local'].should.equal project_path   
       yaml[project_name]['global'].should.equal nil
+    end
+    
+    it "raises help! if invalid args are provided" do
+      lambda { run_command("config", "--#{scope}", 'old_path') }
+        .should.raise CLAide::Help
+    end
+
+    it "doesn't write stupid stuff to file if invalid args" do
+      # File.open(@file_path, 'w') { |f| f.write('HAI') }
+      run_command("config", "--#{scope}", 'old_path')
+      yaml = YAML.load(File.open(@file_path))
+      yaml[project_name].should.equal nil
     end
 
   end

@@ -1,7 +1,7 @@
 module Pod
-  
+
   class Command
-  
+
     class Config < Command
       CONFIG_FILE_PATH = File.expand_path('~/.config/cocoapods')
 
@@ -24,8 +24,10 @@ module Pod
       def self.options
         [['--local' ,'sergserg'], ['--global', 'sergresgse'], ['--delete', 'meh']].concat(super)
       end
-      
+
       def run
+        help! unless args_are_valid?
+
         config = load_config
         config[@name] ||= {}
         if @should_delete
@@ -48,6 +50,13 @@ module Pod
         FileUtils.touch(CONFIG_FILE_PATH) unless File.exists? CONFIG_FILE_PATH
         YAML.load(File.open(CONFIG_FILE_PATH)) || {}
       end
+
+      def args_are_valid?
+        valid = !!@name
+        valid &= !!@path unless @should_delete
+        valid
+      end
+
     end
 
   end
