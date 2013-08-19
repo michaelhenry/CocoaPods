@@ -2,6 +2,16 @@ module Pod
 
   class Command
 
+    # This command was made in first place for supporting local repos.
+    # Command uses file ~/.config/cocoapods
+    #
+    # Sample usage: 
+    #   pod config --local ObjectiveSugar ~/code/OSS/ObjectiveSugar
+    #   pod config --global ObjectiveRecord ~/code/OSS/ObjectiveRecord
+    #
+    #   pod config --delete --local Kiwi
+    #   pod config --delete --global Kiwi
+    #
     class Config < Command
       CONFIG_FILE_PATH = File.expand_path('~/.config/cocoapods')
 
@@ -9,7 +19,6 @@ module Pod
       self.description = <<-DESC
         Run `bundle help config`, but replace 'bundle' with 'pod'
       DESC
-      # TODO: write documentation
 
       self.arguments = '[name] (path) [--local, --global, --delete]'
 
@@ -22,7 +31,7 @@ module Pod
         super
       end
       def self.options
-        [['--local' ,'sergserg'], ['--global', 'sergresgse'], ['--delete', 'meh']].concat(super)
+        [['--local' ,'sergserg'], ['--global', 'sergresgse'], ['--delete', 'meh']]
       end
 
       def run

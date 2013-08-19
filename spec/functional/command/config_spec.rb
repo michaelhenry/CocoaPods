@@ -26,11 +26,11 @@ module Pod
 
       it "deletes a #{scope} configuration option from the config file" do
         not_current_scope = scopes.detect { |s| s != scope }
-        
+
         run_command('config', "--#{not_current_scope}", project_name, project_path)
         run_command('config', "--#{scope}", project_name, project_path)
         run_command('config', "--#{scope}", "--delete", project_name)
-        
+
         yaml = YAML.load(File.open(@file_path))
         yaml[project_name][scope].should.equal nil
         yaml[project_name][not_current_scope].should.equal project_path
@@ -43,6 +43,11 @@ module Pod
         yaml = YAML.load(File.open(@file_path))
         yaml[project_name].should.equal nil
       end
+
+      it "raises help! if invalid args are provided" do
+        lambda { run_command("config", "--#{scope}", 'old_path') }
+          .should.raise CLAide::Help
+      end
     end
 
     it "defaults to local scope" do
@@ -51,26 +56,18 @@ module Pod
       yaml[project_name]['local'].should.equal project_path   
       yaml[project_name]['global'].should.equal nil
     end
-    
-    it "raises help! if invalid args are provided" do
-      lambda { run_command("config", "--#{scope}", 'old_path') }
-        .should.raise CLAide::Help
-    end
-
-    it "doesn't write stupid stuff to file if invalid args" do
-      # File.open(@file_path, 'w') { |f| f.write('HAI') }
-      run_command("config", "--#{scope}", 'old_path')
-      yaml = YAML.load(File.open(@file_path))
-      yaml[project_name].should.equal nil
-    end
 
   end
 end
 
+# DESIRED FORMAT
+#
 # ---
-# COCOAPODS-CORE:
-#   global:
-#   local:
-
-# COCOAPODS-DOWNLOADER:
-#   local: /Users/mneorr/code/OSS/CocoaPods/cocoapods-downloader
+# LOCAL_REPOS:
+#   SampleApp:
+#     ARAnalytics: ~/code/ARAnalytics
+# 
+# GLOBAL_REPOS:
+#   ObjectiveRecord: ~/code/OSS/ObjectiveRecord
+#   ObjectiveSugar: ~/code/OSS/ObjectiveSugar
+# 

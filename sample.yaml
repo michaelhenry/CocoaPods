@@ -1,0 +1,18 @@
+LOCAL_REPOS:
+  LOCAL_SCOPE:
+    SampleApp:
+      ARAnalytics: ~/code/ARAnalytics
+
+  GLOBAL_SCOPE:
+    ObjectiveRecord: ~/code/OSS/ObjectiveRecord
+    ObjectiveSugar: ~/code/OSS/ObjectiveSugar
+
+
+LOCAL_REPOS:
+  SampleApp:
+    ARAnalytics: ~/code/ARAnalytics
+
+GLOBAL_REPOS:
+  ObjectiveRecord: ~/code/OSS/ObjectiveRecord
+  ObjectiveSugar: ~/code/OSS/ObjectiveSugar
+
