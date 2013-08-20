@@ -25,8 +25,8 @@ module Pod
       self.arguments = '[pod name] (path) [--local, --global, --delete]'
 
       def initialize(argv)
-        @local = argv.flag?('local')
         @global = argv.flag?('global')
+        @local = argv.flag?('local') || !@global
         @should_delete = argv.flag?('delete')
         @pod_name   = argv.shift_argument
         @pod_path   = argv.shift_argument
@@ -46,9 +46,9 @@ module Pod
 
       private
 
-      def scope
-        @global ? 'global' : 'local'
-      end
+      #def scope
+        #@global ? 'global' : 'local'
+      #end
 
       def load_config
         FileUtils.touch(CONFIG_FILE_PATH) unless File.exists? CONFIG_FILE_PATH
@@ -66,20 +66,31 @@ module Pod
       end
 
       def store_config
-        config = load_config
+        #config = load_config
         #if @should_delete
           #config[@pod_name].delete(scope)
           #config.delete(@pod_name) if config[@pod_name].empty?
         #else
-        if @global
-          config[GLOBAL_REPOS][@pod_name] = @pod_path
+        if @local
+          store_local_config
         else
-          config[LOCAL_REPOS][@project_name] ||= {}
-          config[LOCAL_REPOS][@project_name][@pod_name] = @pod_path
+          store_global
         end
-        #end
 
-        File.write(CONFIG_FILE_PATH, YAML.dump(config))
+        File.write(CONFIG_FILE_PATH, YAML.dump(config_hash))
+      end
+
+      def store_global
+        config_hash[GLOBAL_REPOS][@pod_name] = @pod_path
+      end
+
+      def store_local_config
+        config_hash[LOCAL_REPOS][@project_name] ||= {}
+        config_hash[LOCAL_REPOS][@project_name][@pod_name] = @pod_path
+      end
+
+      def config_hash
+        @config_hash ||= load_config
       end
 
     end
