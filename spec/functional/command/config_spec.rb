@@ -5,8 +5,8 @@ module Pod
   describe Command::Config do
     extend SpecHelper::TemporaryRepos
 
-    LOCAL_REPOS = 'LOCAL_REPOS'
-    GLOBAL_REPOS = 'GLOBAL_REPOS'
+    LOCAL_OVERRIDES = 'PER_PROJECT_REPO_OVERRIDES'
+    GLOBAL_OVERRIDES = 'GLOBAL_REPO_OVERRIDES'
     pod_name = 'ObjectiveSugar'
     pod_path = '~/code/OSS/ObjectiveSugar'
     project_name = 'SampleProject'
@@ -24,21 +24,21 @@ module Pod
         run_command('config', "--local", pod_name, pod_path)
         yaml = YAML.load(File.open(@config_file_path))
 
-        yaml[LOCAL_REPOS][project_name][pod_name].should.equal pod_path
+        yaml[LOCAL_OVERRIDES][project_name][pod_name].should.equal pod_path
       end
 
       it "writes global repos without specifying project" do
         run_command('config', "--global", pod_name, pod_path)
         yaml = YAML.load(File.open(@config_file_path))
 
-        yaml[GLOBAL_REPOS][pod_name].should.equal pod_path
+        yaml[GLOBAL_OVERRIDES][pod_name].should.equal pod_path
       end
 
       it "defaults to local scope" do
         run_command('config', pod_name, pod_path)
         yaml = YAML.load(File.open(@config_file_path))
 
-        yaml[LOCAL_REPOS][project_name][pod_name].should.equal pod_path
+        yaml[LOCAL_OVERRIDES][project_name][pod_name].should.equal pod_path
       end
 
       it "raises help! if invalid args are provided" do
@@ -57,8 +57,8 @@ module Pod
         run_command('config', "--delete", pod_name)
         yaml = YAML.load(File.open(@config_file_path))
 
-        yaml.should.not.has_key? LOCAL_REPOS
-        yaml[GLOBAL_REPOS][pod_name].should.equal pod_path
+        yaml.should.not.has_key? LOCAL_OVERRIDES
+        yaml[GLOBAL_OVERRIDES][pod_name].should.equal pod_path
       end
 
       it "deletes global configuration" do
@@ -66,7 +66,7 @@ module Pod
         run_command('config', "--global", "--delete", pod_name)
         yaml = YAML.load(File.open(@config_file_path))
 
-        yaml.should.not.has_key? GLOBAL_REPOS
+        yaml.should.not.has_key? GLOBAL_OVERRIDES
       end
   end
 end
@@ -76,11 +76,11 @@ end
 # ===================
 #
 # ---
-# LOCAL_REPOS:
+# LOCAL_OVERRIDES:
 #   SampleApp:
 #     ARAnalytics: ~/code/ARAnalytics
 # 
-# GLOBAL_REPOS:
+# GLOBAL_OVERRIDES:
 #   ObjectiveRecord: ~/code/OSS/ObjectiveRecord
 #   ObjectiveSugar: ~/code/OSS/ObjectiveSugar
 # 

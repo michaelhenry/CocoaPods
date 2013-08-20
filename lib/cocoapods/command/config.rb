@@ -17,8 +17,8 @@ module Pod
     #
     class Config < Command
       CONFIG_FILE_PATH = File.expand_path('~/.config/cocoapods')
-      LOCAL_REPOS = 'LOCAL_REPOS'
-      GLOBAL_REPOS = 'GLOBAL_REPOS'
+      LOCAL_OVERRIDES = 'PER_PROJECT_REPO_OVERRIDES'
+      GLOBAL_OVERRIDES = 'GLOBAL_REPO_OVERRIDES'
 
       self.summary = 'Something like `bundle config` ... but better.'
       self.description = <<-DESC
@@ -67,20 +67,20 @@ module Pod
       end
 
       def store_global_config
-        config_hash[GLOBAL_REPOS][@pod_name] = @pod_path
+        config_hash[GLOBAL_OVERRIDES][@pod_name] = @pod_path
       end
 
       def store_local_config
-        config_hash[LOCAL_REPOS][project_name] ||= {}
-        config_hash[LOCAL_REPOS][project_name][@pod_name] = @pod_path
+        config_hash[LOCAL_OVERRIDES][project_name] ||= {}
+        config_hash[LOCAL_OVERRIDES][project_name][@pod_name] = @pod_path
       end
 
       def delete_local_config
-        config_hash[LOCAL_REPOS][project_name].delete(@pod_name)
+        config_hash[LOCAL_OVERRIDES][project_name].delete(@pod_name)
       end
 
       def delete_global_config 
-        config_hash[GLOBAL_REPOS].delete(@pod_name)
+        config_hash[GLOBAL_OVERRIDES].delete(@pod_name)
       end
 
       def config_hash
@@ -90,8 +90,8 @@ module Pod
       def load_config
         FileUtils.touch(CONFIG_FILE_PATH) unless File.exists? CONFIG_FILE_PATH
         config = YAML.load(File.open(CONFIG_FILE_PATH)) || {}
-        config[LOCAL_REPOS] ||= {}
-        config[GLOBAL_REPOS] ||= {}
+        config[LOCAL_OVERRIDES] ||= {}
+        config[GLOBAL_OVERRIDES] ||= {}
         config
       end
 
