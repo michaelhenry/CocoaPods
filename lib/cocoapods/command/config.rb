@@ -14,39 +14,34 @@ module Pod
     #
     class Config < Command
       CONFIG_FILE_PATH = File.expand_path('~/.config/cocoapods')
+      LOCAL_REPOS = 'LOCAL_REPOS'
+      GLOBAL_REPOS = 'GLOBAL_REPOS'
 
       self.summary = 'Something like `bundle config` ... but better.'
       self.description = <<-DESC
         Run `bundle help config`, but replace 'bundle' with 'pod'
       DESC
 
-      self.arguments = '[name] (path) [--local, --global, --delete]'
+      self.arguments = '[pod name] (path) [--local, --global, --delete]'
 
       def initialize(argv)
         @local = argv.flag?('local')
         @global = argv.flag?('global')
         @should_delete = argv.flag?('delete')
-        @name   = argv.shift_argument
-        @path   = argv.shift_argument
+        @pod_name   = argv.shift_argument
+        @pod_path   = argv.shift_argument
         super
       end
+
       def self.options
-        [['--local' ,'sergserg'], ['--global', 'sergresgse'], ['--delete', 'meh']]
+        [['--local' , 'Uses the local pod for the current project only'],
+         ['--global', 'Uses the local pod everywhere'],
+         ['--delete', 'Removes the local pod from configuration']]
       end
 
       def run
         help! unless args_are_valid?
-
-        config = load_config
-        config[@name] ||= {}
-        if @should_delete
-          config[@name].delete(scope)
-          config.delete(@name) if config[@name].empty?
-        else
-          config[@name][scope] = @path
-        end
-
-        File.open(CONFIG_FILE_PATH, 'w') { |f| f.write(YAML.dump(config)) }
+        store_config
       end
 
       private
@@ -57,13 +52,34 @@ module Pod
 
       def load_config
         FileUtils.touch(CONFIG_FILE_PATH) unless File.exists? CONFIG_FILE_PATH
-        YAML.load(File.open(CONFIG_FILE_PATH)) || {}
+        YAML.load(File.open(CONFIG_FILE_PATH)) || fresh_config
+      end
+
+      def fresh_config
+        { GLOBAL_REPOS => {}, LOCAL_REPOS => {} }
       end
 
       def args_are_valid?
-        valid = !!@name
-        valid &= !!@path unless @should_delete
+        valid = !!@pod_name
+        valid &= !!@pod_path unless @should_delete
         valid
+      end
+
+      def store_config
+        config = load_config
+        #if @should_delete
+          #config[@pod_name].delete(scope)
+          #config.delete(@pod_name) if config[@pod_name].empty?
+        #else
+        if @global
+          config[GLOBAL_REPOS][@pod_name] = @pod_path
+        else
+          config[LOCAL_REPOS][@project_name] ||= {}
+          config[LOCAL_REPOS][@project_name][@pod_name] = @pod_path
+        end
+        #end
+
+        File.write(CONFIG_FILE_PATH, YAML.dump(config))
       end
 
     end
