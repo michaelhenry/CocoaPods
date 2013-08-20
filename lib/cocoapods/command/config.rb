@@ -5,7 +5,7 @@ module Pod
     # This command was made in first place for supporting local repos.
     # Command uses file ~/.config/cocoapods
     #
-    # Sample usage: 
+    # Sample usage:
     #   pod config --local ObjectiveSugar ~/code/OSS/ObjectiveSugar
     #   pod config --global ObjectiveRecord ~/code/OSS/ObjectiveRecord
     #
@@ -44,16 +44,8 @@ module Pod
         store_config
       end
 
+
       private
-
-      #def scope
-        #@global ? 'global' : 'local'
-      #end
-
-      def load_config
-        FileUtils.touch(CONFIG_FILE_PATH) unless File.exists? CONFIG_FILE_PATH
-        YAML.load(File.open(CONFIG_FILE_PATH)) || fresh_config
-      end
 
       def fresh_config
         { GLOBAL_REPOS => {}, LOCAL_REPOS => {} }
@@ -71,29 +63,39 @@ module Pod
           #config[@pod_name].delete(scope)
           #config.delete(@pod_name) if config[@pod_name].empty?
         #else
-        if @local
-          store_local_config
-        else
-          store_global
-        end
+        @local ? store_local_config : store_global_config
 
         File.write(CONFIG_FILE_PATH, YAML.dump(config_hash))
       end
 
-      def store_global
+      def store_global_config
         config_hash[GLOBAL_REPOS][@pod_name] = @pod_path
       end
 
       def store_local_config
-        config_hash[LOCAL_REPOS][@project_name] ||= {}
-        config_hash[LOCAL_REPOS][@project_name][@pod_name] = @pod_path
+        puts config_hash.inspect
+        config_hash[LOCAL_REPOS][project_name] ||= {}
+        puts config_hash.inspect
+        config_hash[LOCAL_REPOS][project_name][@pod_name] = @pod_path
+        puts config_hash.inspect
       end
 
       def config_hash
         @config_hash ||= load_config
       end
 
+      def load_config
+        FileUtils.touch(CONFIG_FILE_PATH) unless File.exists? CONFIG_FILE_PATH
+        YAML.load(File.open(CONFIG_FILE_PATH)) || fresh_config
+      end
+
+      def project_name
+        `basename #{Dir.pwd}`.chomp
+      end
+
     end
 
   end
+
 end
+
