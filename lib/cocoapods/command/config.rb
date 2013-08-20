@@ -1,5 +1,4 @@
 module Pod
-
   class Command
 
     # This command was made in first place for supporting local repos.
@@ -9,8 +8,12 @@ module Pod
     #   pod config --local ObjectiveSugar ~/code/OSS/ObjectiveSugar
     #   pod config --global ObjectiveRecord ~/code/OSS/ObjectiveRecord
     #
-    #   pod config --delete --local Kiwi
-    #   pod config --delete --global Kiwi
+    #   pod config --delete --local ObjectiveSugar
+    #   pod config --delete --global ObjectiveSugar
+    #
+    # For both storing and deleting, --local is default and it can be ommitted
+    #   pod config Kiwi ~/code/OSS/Kiwi
+    #   pod config --delete Kiwi
     #
     class Config < Command
       CONFIG_FILE_PATH = File.expand_path('~/.config/cocoapods')
@@ -19,10 +22,11 @@ module Pod
 
       self.summary = 'Something like `bundle config` ... but better.'
       self.description = <<-DESC
-        Run `bundle help config`, but replace 'bundle' with 'pod'
+        Use `pod config` when you're developing a pod that uses another pod of yours.
+        This way you will reference it locally without modifying a Podfile.
       DESC
 
-      self.arguments = '[pod name] (path) [--local, --global, --delete]'
+      self.arguments = '[pod name] [--local, --global, --delete] [path]'
 
       def initialize(argv)
         @global = argv.flag?('global')
@@ -41,15 +45,11 @@ module Pod
 
       def run
         help! unless args_are_valid?
-        store_config
+        update_config
       end
 
 
       private
-
-      def fresh_config
-        { GLOBAL_REPOS => {}, LOCAL_REPOS => {} }
-      end
 
       def args_are_valid?
         valid = !!@pod_name
@@ -57,15 +57,13 @@ module Pod
         valid
       end
 
-      def store_config
-        #config = load_config
-        #if @should_delete
-          #config[@pod_name].delete(scope)
-          #config.delete(@pod_name) if config[@pod_name].empty?
-        #else
-        @local ? store_local_config : store_global_config
-
-        File.write(CONFIG_FILE_PATH, YAML.dump(config_hash))
+      def update_config
+        if @should_delete
+          @local ? delete_local_config : delete_global_config
+        else
+          @local ? store_local_config : store_global_config
+        end
+        write_config_to_file
       end
 
       def store_global_config
@@ -73,11 +71,16 @@ module Pod
       end
 
       def store_local_config
-        puts config_hash.inspect
         config_hash[LOCAL_REPOS][project_name] ||= {}
-        puts config_hash.inspect
         config_hash[LOCAL_REPOS][project_name][@pod_name] = @pod_path
-        puts config_hash.inspect
+      end
+
+      def delete_local_config
+        config_hash[LOCAL_REPOS][project_name].delete(@pod_name)
+      end
+
+      def delete_global_config 
+        config_hash[GLOBAL_REPOS].delete(@pod_name)
       end
 
       def config_hash
@@ -86,16 +89,27 @@ module Pod
 
       def load_config
         FileUtils.touch(CONFIG_FILE_PATH) unless File.exists? CONFIG_FILE_PATH
-        YAML.load(File.open(CONFIG_FILE_PATH)) || fresh_config
+        config = YAML.load(File.open(CONFIG_FILE_PATH)) || {}
+        config[LOCAL_REPOS] ||= {}
+        config[GLOBAL_REPOS] ||= {}
+        config
       end
 
       def project_name
         `basename #{Dir.pwd}`.chomp
       end
 
+      def write_config_to_file
+        File.write(CONFIG_FILE_PATH, config_hash.delete_blank.to_yaml)
+      end
+
     end
-
   end
+end
 
+class Hash
+  def delete_blank
+    delete_if{|k, v| v.empty? or v.instance_of?(Hash) && v.delete_blank.empty?}
+  end
 end
 

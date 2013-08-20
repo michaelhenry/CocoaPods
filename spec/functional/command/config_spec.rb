@@ -10,8 +10,6 @@ module Pod
     pod_name = 'ObjectiveSugar'
     pod_path = '~/code/OSS/ObjectiveSugar'
     project_name = 'SampleProject'
-    #project_path = '~/path/to/example'
-    #scopes       = ['global', 'local']
 
     before do
       Config.instance = nil
@@ -22,58 +20,54 @@ module Pod
       Command::Config.const_set("CONFIG_FILE_PATH", @config_file_path)
     end
 
-    it "writes local repos for each project" do
-      run_command('config', "--local", pod_name, pod_path)
-      yaml = YAML.load(File.open(@config_file_path))
+      it "writes local repos for each project" do
+        run_command('config', "--local", pod_name, pod_path)
+        yaml = YAML.load(File.open(@config_file_path))
 
-      yaml[LOCAL_REPOS][project_name][pod_name].should.equal pod_path
-    end
+        yaml[LOCAL_REPOS][project_name][pod_name].should.equal pod_path
+      end
 
-    it "writes global repos without specifying project" do
-      run_command('config', "--global", pod_name, pod_path)
-      yaml = YAML.load(File.open(@config_file_path))
+      it "writes global repos without specifying project" do
+        run_command('config', "--global", pod_name, pod_path)
+        yaml = YAML.load(File.open(@config_file_path))
 
-      yaml[GLOBAL_REPOS][pod_name].should.equal pod_path
-    end
+        yaml[GLOBAL_REPOS][pod_name].should.equal pod_path
+      end
 
-      #it "deletes a #{scope} configuration option from the config file" do
-        #not_current_scope = scopes.detect { |s| s != scope }
+      it "defaults to local scope" do
+        run_command('config', pod_name, pod_path)
+        yaml = YAML.load(File.open(@config_file_path))
 
-        #run_command('config', "--#{not_current_scope}", project_name, project_path)
-        #run_command('config', "--#{scope}", project_name, project_path)
-        #run_command('config', "--#{scope}", "--delete", project_name)
+        yaml[LOCAL_REPOS][project_name][pod_name].should.equal pod_path
+      end
 
-        #yaml = YAML.load(File.open(@config_file_path))
-        #yaml[project_name][scope].should.equal nil
-        #yaml[project_name][not_current_scope].should.equal project_path
-      #end
+      it "raises help! if invalid args are provided" do
+        [
+          lambda { run_command("config", 'ObjectiveSugar') },
+          lambda { run_command("config", "--local", 'ObjectiveSugar') },
+          lambda { run_command("config", "--global", 'ObjectiveSugar') },
+          lambda { run_command("config", '~/code/OSS/ObjectiveSugar') },
+        ]
+        .each { |invalid| invalid.should.raise CLAide::Help }
+      end
 
-      #it "deletes the config key if no scopes are set" do
-        #run_command('config', "--#{scope}", project_name, project_path)
-        #run_command('config', "--#{scope}", "--delete", project_name)
+      it "deletes local configuration by default" do
+        run_command('config', "--global", pod_name, pod_path)
+        run_command('config', "--local", pod_name, pod_path)
+        run_command('config', "--delete", pod_name)
+        yaml = YAML.load(File.open(@config_file_path))
 
-        #yaml = YAML.load(File.open(@config_file_path))
-        #yaml[project_name].should.equal nil
-      #end
+        yaml.should.not.has_key? LOCAL_REPOS
+        yaml[GLOBAL_REPOS][pod_name].should.equal pod_path
+      end
 
-    #it "defaults to local scope" do
-      #run_command('config', pod_name, pod_path)
-      #yaml = YAML.load(File.open(@config_file_path))
+      it "deletes global configuration" do
+        run_command('config', "--global", pod_name, pod_path)
+        run_command('config', "--global", "--delete", pod_name)
+        yaml = YAML.load(File.open(@config_file_path))
 
-      #yaml[LOCAL_REPOS][project_name].should.equal project_path   
-      #yaml[GLOBAL_REPOS][project_name].should.equal nil
-    #end
-
-
-    it "raises help! if invalid args are provided" do
-      [
-        lambda { run_command("config", 'ObjectiveSugar') },
-        lambda { run_command("config", "--local", 'ObjectiveSugar') },
-        lambda { run_command("config", "--global", 'ObjectiveSugar') },
-        lambda { run_command("config", '~/code/OSS/ObjectiveSugar') },
-      ]
-      .each { |invalid| invalid.should.raise CLAide::Help }
-    end
+        yaml.should.not.has_key? GLOBAL_REPOS
+      end
   end
 end
 
